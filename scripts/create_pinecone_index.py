@@ -1,10 +1,24 @@
+import os
 import pinecone
-from config import PINECONE_API_KEY, PINECONE_ENVIRONMENT, PINECONE_INDEX_NAME
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# Load environment variables
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
+INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+
+# Initialize Pinecone
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 
-if PINECONE_INDEX_NAME not in pinecone.list_indexes():
-    pinecone.create_index(PINECONE_INDEX_NAME, dimension=1536, metric="cosine")
-    print(f"Index {PINECONE_INDEX_NAME} created successfully!")
+# Check if index exists, else create it
+if INDEX_NAME not in pinecone.list_indexes():
+    pinecone.create_index(
+        name=INDEX_NAME,
+        dimension=1536,
+        metric="cosine"
+    )
+    print(f"✅ Created Pinecone index: {INDEX_NAME}")
 else:
-    print(f"Index {PINECONE_INDEX_NAME} already exists.")
+    print(f"✅ Pinecone index already exists: {INDEX_NAME}")
