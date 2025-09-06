@@ -1,3 +1,4 @@
+import os
 import pinecone
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone as LangPinecone
@@ -12,10 +13,12 @@ def create_index_if_not_exists(dim=1536, metric="cosine"):
     init_pinecone()
     if PINECONE_INDEX_NAME not in pinecone.list_indexes():
         pinecone.create_index(name=PINECONE_INDEX_NAME, dimension=dim, metric=metric)
+        print(f"✅ Created Pinecone index: {PINECONE_INDEX_NAME}")
         return True
+    print(f"✅ Pinecone index already exists: {PINECONE_INDEX_NAME}")
     return False
 
 def get_vectorstore():
     init_pinecone()
-    embeddings = OpenAIEmbeddings(model=OPENAI_EMBED_MODEL, openai_api_key=None)  # langchain will read env OPENAI_API_KEY
-    return LangPinecone(index_name=PINECONE_INDEX_NAME, embedding=embeddings, pinecone_index=pinecone.Index(PINECONE_INDEX_NAME))
+    embeddings = OpenAIEmbeddings(model=OPENAI_EMBED_MODEL, openai_api_key=os.getenv("OPENAI_API_KEY"))
+    return LangPinecone.from_existing_index(index_name=PINECONE_INDEX_NAME, embedding=embeddings)
