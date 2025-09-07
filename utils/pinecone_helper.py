@@ -1,7 +1,7 @@
 import os
 from pinecone import Pinecone, ServerlessSpec
 from langchain_openai import OpenAIEmbeddings
-from langchain.vectorstores import Pinecone as LangPinecone
+from langchain_community.vectorstores import Pinecone as LangPinecone
 from config import PINECONE_API_KEY, PINECONE_INDEX_NAME, OPENAI_EMBED_MODEL
 
 # ✅ Initialize Pinecone client
