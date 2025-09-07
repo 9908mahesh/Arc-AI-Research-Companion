@@ -1,9 +1,11 @@
-langchain==0.3.0
+
 langchain-community==0.3.0
-langchain-openai==0.3.0
-openai>=1.58.1,<2.0.0
-pinecone>=4.0.0
 streamlit
 python-dotenv
 pypdf
 reportlab
+langchain==0.3.2
+langchain-openai==0.2.0
+langchain-pinecone==0.1.0
+pinecone==4.1.0
+openai==1.35.0
