@@ -1,6 +1,6 @@
 import os
 import pinecone
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.vectorstores import Pinecone as LangPinecone
 from config import PINECONE_API_KEY, PINECONE_ENVIRONMENT, PINECONE_INDEX_NAME, OPENAI_EMBED_MODEL
 
