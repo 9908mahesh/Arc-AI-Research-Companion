@@ -6,5 +6,6 @@ pinecone-client==3.0.0
 streamlit==1.37.0
 python-dotenv==1.0.0
 pypdf==3.17.1
-
+tiktoken==0.5.2    # For token counting
+faiss-cpu==1.7.4   # For local vector storage fallback
 
