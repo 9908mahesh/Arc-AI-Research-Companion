@@ -6,3 +6,12 @@ pinecone-client==3.0.0
 streamlit
 python-dotenv
 pypdf
+langchain
+langchain-community
+langchain-openai
+openai
+pinecone-client
+streamlit
+python-dotenv
+pypdf
+
