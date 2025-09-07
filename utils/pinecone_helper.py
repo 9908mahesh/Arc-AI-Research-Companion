@@ -1,6 +1,7 @@
 import os
 from pinecone import Pinecone, ServerlessSpec
 from langchain_openai import OpenAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
 from langchain_community.vectorstores import Pinecone as LangPinecone
 from config import PINECONE_API_KEY, PINECONE_INDEX_NAME, OPENAI_EMBED_MODEL
 
@@ -26,11 +27,16 @@ def create_index_if_not_exists(dim=1536, metric="cosine"):
     print(f"ℹ️ Pinecone index already exists: {PINECONE_INDEX_NAME}")
     return False
 
-# ✅ Updated get_vectorstore function
+
 def get_vectorstore():
-    # Initialize embeddings
-    embeddings = OpenAIEmbeddings(model=OPENAI_EMBED_MODEL, openai_api_key=os.getenv("OPENAI_API_KEY"))
-    
-    # ✅ Instead of calling pinecone.Index(), we rely on LangChain wrapper
-    # The new LangChain version internally handles the Pinecone client object.
-    return LangPinecone.from_existing_index(index_name=PINECONE_INDEX_NAME, embedding=embeddings)
+    index_name = os.getenv("PINECONE_INDEX_NAME")
+    if not index_name:
+        raise ValueError("PINECONE_INDEX_NAME is missing in .env")
+
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+    vectorstore = PineconeVectorStore.from_existing_index(
+        index_name=index_name,
+        embedding=embeddings
+    )
+    return vectorstore
