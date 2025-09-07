@@ -2,18 +2,16 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.docstore.document import Document
 from typing import List, Dict
 from config import OPENAI_CHAT_MODEL, OPENAI_EMBED_MODEL, OPENAI_API_KEY, DEFAULT_TOP_K
-from utils.pinecone_helper import create_index_if_not_exists, get_vector_store
+from utils.pinecone_helper import get_vectorstore
 from utils.pdf_loader import load_pdf_as_documents
 
-# Ensure index exists
-create_index_if_not_exists(dimension=1536)
-
+# Updated ingest_filepaths
 def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overlap: int = 150):
     """
     Ingest multiple PDFs into Pinecone vectorstore.
     Returns number of documents added.
     """
-    vs = get_vector_store()
+    vs = get_vectorstore()
     docs_added = 0
     for p in file_paths:
         docs = load_pdf_as_documents(p)
@@ -22,8 +20,9 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             docs_added += len(docs)
     return docs_added
 
+# Updated retriever function
 def get_retriever(top_k: int = None):
-    vs = get_vector_store()
+    vs = get_vectorstore()
     retriever = vs.as_retriever(search_type="similarity", search_kwargs={"k": top_k or DEFAULT_TOP_K})
     return retriever
 
