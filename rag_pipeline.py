@@ -4,6 +4,8 @@ from typing import List, Dict
 from config import OPENAI_CHAT_MODEL, OPENAI_EMBED_MODEL, OPENAI_API_KEY, DEFAULT_TOP_K
 from utils.pinecone_helper import get_vectorstore, create_index_if_not_exists
 from utils.pdf_loader import load_pdf_as_documents
+from langchain_pinecone import PineconeVectorStore
+
 
 # ✅ Ensure Pinecone index exists before any ingestion or retrieval
 create_index_if_not_exists(dim=1536)
