@@ -1,7 +1,6 @@
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from config import OPENAI_CHAT_MODEL, OPENAI_EMBED_MODEL, OPENAI_API_KEY, DEFAULT_TOP_K
 from utils.pinecone_helper import create_index_if_not_exists, get_vectorstore
