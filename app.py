@@ -1,9 +1,7 @@
 import streamlit as st
 import tempfile
 import os
-from config import ensure_keys, DEFAULT_TOP_K, PINECONE_INDEX_NAME
 from rag_pipeline import ingest_filepaths, answer_query, get_retriever, summarize_documents
-from utils.pinecone_helper import create_index_if_not_exists
 from utils.pdf_exporter import create_summary_pdf
 from utils.ui_helpers import style_app, sidebar_instructions
 
@@ -11,30 +9,15 @@ from utils.ui_helpers import style_app, sidebar_instructions
 st.set_page_config(page_title="Arc – AI Research Companion", layout="wide", initial_sidebar_state="expanded")
 style_app()
 
-# --- Validate Environment ---
-try:
-    ensure_keys()
-except RuntimeError as e:
-    st.error(f"Configuration error: {e}")
-    st.stop()
-
 # --- Title ---
 st.title("📚 Arc — AI Research Companion")
-st.markdown("**Private & powerful research assistant — RAG using OpenAI + Pinecone**")
+st.markdown("**Private & powerful research assistant — RAG using HuggingFace + ChromaDB**")
 
 # --- Sidebar ---
 with st.sidebar:
     sidebar_instructions()
     st.markdown("---")
-    st.write(f"**Current Index:** `{PINECONE_INDEX_NAME}`")
-
-    if st.button("🔍 Create Pinecone Index (if missing)"):
-        with st.spinner("Checking/creating index..."):
-            try:
-                create_index_if_not_exists(dimension=1536)
-                st.success("✅ Index is ready.")
-            except Exception as e:
-                st.error(f"Index setup failed: {e}")
+    st.write("**Current Vector DB:** `Chroma (Local)`")
 
 # --- Section 1: PDF Ingestion ---
 st.header("1) Upload & Ingest PDFs")
@@ -57,9 +40,9 @@ if st.button("📥 Ingest Uploaded PDFs"):
                     tmp.close()
                     tmp_files.append(tmp.name)
 
-                # Ingest documents into Pinecone
+                # Ingest documents into Chroma
                 total_chunks = ingest_filepaths(tmp_files, chunk_size, chunk_overlap)
-                st.success(f"✅ Successfully ingested {total_chunks} chunks into Pinecone index.")
+                st.success(f"✅ Successfully ingested {total_chunks} chunks into Chroma DB.")
             except Exception as e:
                 st.error(f"Ingestion failed: {e}")
             finally:
@@ -83,7 +66,7 @@ with col1:
         index=0,
         help="Choose response style: detailed = comprehensive answer; brief = short summary; citations = only sources"
     )
-    top_k = st.slider("Number of retrieved documents (Top-K)", min_value=3, max_value=12, value=DEFAULT_TOP_K)
+    top_k = st.slider("Number of retrieved documents (Top-K)", min_value=3, max_value=12, value=5)
     question = st.text_input("Ask your question about the ingested PDFs:")
 
     if st.button("✨ Get Answer"):
@@ -92,7 +75,7 @@ with col1:
         else:
             with st.spinner("Retrieving and generating answer..."):
                 try:
-                    result = answer_query(question, top_k=top_k, mode=mode)
+                    result = answer_query(question, top_k=top_k)
 
                     # Display Answer
                     st.markdown("### ✅ Answer")
@@ -103,7 +86,7 @@ with col1:
                     if citations:
                         st.markdown("### 📚 Retrieved Evidence")
                         for i, c in enumerate(citations, start=1):
-                            st.markdown(f"**{i}. {c['source']} (Page {c['page']})** — score: {round(c.get('score', 0), 3)}")
+                            st.markdown(f"**{i}. {c['source']} (Page {c['page']})**")
                             st.write(f"> {c['snippet'][:500]}...")
                 except Exception as e:
                     st.error(f"Query failed: {e}")
@@ -113,7 +96,7 @@ with col2:
     if st.button("🧾 Summarize Entire Corpus"):
         with st.spinner("Generating summary of ingested documents..."):
             try:
-                retriever = get_retriever(top_k=DEFAULT_TOP_K)
+                retriever = get_retriever(top_k=5)
                 docs = retriever.get_relevant_documents(" ")  # fetch docs for summary
                 summary = summarize_documents(docs, length="medium")
 
@@ -137,4 +120,4 @@ with col2:
                 st.error(f"Summarization failed: {e}")
 
 st.markdown("---")
-st.caption("Arc • Academic Research with RAG • Powered by OpenAI + Pinecone")
+st.caption("Arc • Academic Research with RAG • Powered by HuggingFace + ChromaDB")
