@@ -5,7 +5,6 @@ from utils.pdf_loader import load_pdf_as_documents
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
-from chromadb.config import Settings
 import os
 
 # ✅ HuggingFace Embeddings
