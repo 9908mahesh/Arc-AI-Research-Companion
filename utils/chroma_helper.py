@@ -1,15 +1,10 @@
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from config import CHROMA_DIR
 import os
 
-CHROMA_DIR = "chroma_db"
+# ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
-# ✅ Chroma DuckDB backend (no SQLite dependency)
-CHROMA_SETTINGS = {
-    "chroma_db_impl": "duckdb+parquet",
-    "persist_directory": CHROMA_DIR
-}
 
 def save_chroma_index(vectorstore):
     vectorstore.persist()
@@ -20,6 +15,5 @@ def load_chroma_index():
         raise FileNotFoundError(f"❌ Chroma DB not found at {CHROMA_DIR}")
     return Chroma(
         persist_directory=CHROMA_DIR,
-        embedding_function=embedding_model,
-        client_settings=CHROMA_SETTINGS
+        embedding_function=embedding_model
     )
