@@ -1,13 +1,15 @@
 from langchain_community.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
-from chromadb.config import Settings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 import os
 
 CHROMA_DIR = "chroma_db"
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# ✅ DuckDB settings (instead of SQLite)
-CHROMA_SETTINGS = Settings(chroma_db_impl="duckdb+parquet")
+# ✅ Chroma DuckDB backend (no SQLite dependency)
+CHROMA_SETTINGS = {
+    "chroma_db_impl": "duckdb+parquet",
+    "persist_directory": CHROMA_DIR
+}
 
 def save_chroma_index(vectorstore):
     vectorstore.persist()
