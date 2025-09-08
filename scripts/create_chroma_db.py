@@ -20,7 +20,8 @@ def create_chroma_index(file_paths, chunk_size=1000, chunk_overlap=150):
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR
+            persist_directory=CHROMA_DIR,
+            client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
         vectorstore.persist()
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
