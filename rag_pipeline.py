@@ -34,7 +34,8 @@ def get_vectorstore():
         raise ValueError("Chroma DB not found. Please ingest documents first.")
     return Chroma(
         persist_directory=CHROMA_DIR,
-        embedding_function=embedding_model
+        embedding_function=embedding_model,
+        client_settings={"chroma_db_impl": "duckdb+parquet"}
     )
 
 # ✅ Ingest PDFs into Chroma
@@ -52,7 +53,8 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR
+            persist_directory=CHROMA_DIR,
+            client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
         vectorstore.persist()
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
