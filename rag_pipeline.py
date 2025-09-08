@@ -1,28 +1,30 @@
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 from typing import List, Dict
 from utils.pdf_loader import load_pdf_as_documents
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import os
 
 # ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# ✅ Initialize FAISS vectorstore globally (in-memory for now)
+# ✅ Chroma DB persistent directory
+CHROMA_DIR = "chroma_db"
 vectorstore = None
 
-# ✅ Build HuggingFace LLM (choose small model for CPU if no GPU)
+# ✅ Initialize HuggingFace LLM
 def build_llm():
-    model_name = "tiiuae/falcon-7b-instruct"  # You can switch to "google/flan-t5-small" for CPU
+    model_name = "google/flan-t5-small"  # Lightweight model for Streamlit Cloud
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
-    text_gen_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer, max_length=512)
+    text_gen_pipeline = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=512)
     return HuggingFacePipeline(pipeline=text_gen_pipeline)
 
 llm = build_llm()
 
-# ✅ Ingest PDFs into FAISS
+# ✅ Ingest PDFs into Chroma
 def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overlap: int = 150):
     global vectorstore
     docs_added = 0
@@ -38,16 +40,21 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             print(f"⚠️ No content extracted from {p}")
 
     if all_docs:
-        vectorstore = FAISS.from_documents(all_docs, embedding_model)
-        print("✅ FAISS index created and populated.")
+        vectorstore = Chroma.from_documents(all_docs, embedding_model, persist_directory=CHROMA_DIR)
+        vectorstore.persist()
+        print("✅ Chroma DB index created and saved.")
 
     return docs_added
 
 # ✅ Retriever
 def get_retriever(top_k: int = 5):
+    global vectorstore
     if vectorstore is None:
-        raise ValueError("FAISS vectorstore is empty. Please ingest documents first.")
-    return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": top_k})
+        if os.path.exists(CHROMA_DIR):
+            vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embedding_model)
+        else:
+            raise ValueError("Chroma DB is empty. Please ingest documents first.")
+    return vectorstore.as_retriever(search_kwargs={"k": top_k})
 
 # ✅ Format citations
 def format_citation_blocks(docs: List[Document]) -> List[Dict]:
@@ -68,7 +75,7 @@ def make_prompt_system():
         "Include inline citations like (FileName.pdf, p. X). If you cannot find evidence, say so."
     )
 
-# ✅ Compose messages
+# ✅ Compose prompt
 def _compose_prompt(question: str, contexts: List[Document]) -> str:
     context_text = ""
     for i, c in enumerate(contexts, start=1):
