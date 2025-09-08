@@ -2,8 +2,8 @@ from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 from typing import List, Dict
 from utils.pdf_loader import load_pdf_as_documents
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.llms import HuggingFacePipeline
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 from chromadb.config import Settings
 import os
@@ -13,8 +13,18 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 
 # ✅ Chroma DB persistent directory (DuckDB backend)
 CHROMA_DIR = "chroma_db"
-CHROMA_SETTINGS = Settings(chroma_db_impl="duckdb+parquet")
-vectorstore = None
+
+CHROMA_SETTINGS = {
+    "chroma_db_impl": "duckdb+parquet",
+    "persist_directory": CHROMA_DIR
+}
+
+vector_store = Chroma(
+    embedding_function=embedding_model,
+    persist_directory=CHROMA_DIR,
+    client_settings=CHROMA_SETTINGS
+)
+
 
 # ✅ Initialize HuggingFace LLM
 def build_llm():
