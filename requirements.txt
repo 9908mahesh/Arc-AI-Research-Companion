@@ -5,11 +5,11 @@ langchain-huggingface
 transformers
 torch
 sentence-transformers
-chromadb
 pypdf
 pandas
 numpy
 requests
 python-dotenv
 reportlab
+chromadb>=0.4.22
 duckdb
