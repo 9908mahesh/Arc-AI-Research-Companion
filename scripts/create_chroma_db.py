@@ -1,11 +1,22 @@
 import os
+import chromadb
+from chromadb.config import Settings
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from utils.pdf_loader import load_pdf_as_documents
 from config import CHROMA_DIR
 
+# ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
+# ✅ Initialize Chroma with DuckDB
+def get_chroma_client():
+    return chromadb.PersistentClient(
+        path=CHROMA_DIR,
+        settings=Settings(chroma_db_impl="duckdb+parquet")  # ✅ Force DuckDB
+    )
+
+# ✅ Create Chroma index from PDFs
 def create_chroma_index(file_paths, chunk_size=1000, chunk_overlap=150):
     all_docs = []
     for p in file_paths:
@@ -17,11 +28,12 @@ def create_chroma_index(file_paths, chunk_size=1000, chunk_overlap=150):
             print(f"⚠️ No content extracted from {p}")
 
     if all_docs:
+        client = get_chroma_client()
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR,
-            client_settings={"chroma_db_impl": "duckdb+parquet"}
+            client=client,  # ✅ Use DuckDB client
+            persist_directory=CHROMA_DIR
         )
         vectorstore.persist()
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
