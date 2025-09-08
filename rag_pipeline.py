@@ -1,4 +1,7 @@
 from typing import List, Dict
+import os
+import chromadb
+from chromadb.config import Settings
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFacePipeline
@@ -6,14 +9,13 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 from langchain.schema import Document
 from utils.pdf_loader import load_pdf_as_documents
 from config import CHROMA_DIR
-import os
 
-# ✅ Initialize HuggingFace Embeddings
+# ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# ✅ Build HuggingFace LLM Pipeline
+# ✅ LLM using HuggingFace
 def build_llm():
-    model_name = "google/flan-t5-small"  # Lightweight for Streamlit Cloud
+    model_name = "google/flan-t5-small"  # ✅ Lightweight for Streamlit
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
@@ -28,14 +30,22 @@ def build_llm():
 
 llm = build_llm()
 
-# ✅ Chroma Vectorstore (with DuckDB backend)
+# ✅ Get DuckDB-based Chroma Client
+def get_chroma_client():
+    return chromadb.PersistentClient(
+        path=CHROMA_DIR,
+        settings=Settings(chroma_db_impl="duckdb+parquet")
+    )
+
+# ✅ Load Chroma Vectorstore
 def get_vectorstore():
     if not os.path.exists(CHROMA_DIR):
-        raise ValueError("Chroma DB not found. Please ingest documents first.")
+        raise ValueError("❌ Chroma DB not found. Please ingest documents first.")
+    client = get_chroma_client()
     return Chroma(
         persist_directory=CHROMA_DIR,
         embedding_function=embedding_model,
-        client_settings={"chroma_db_impl": "duckdb+parquet"}
+        client=client
     )
 
 # ✅ Ingest PDFs into Chroma
@@ -50,11 +60,12 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             print(f"⚠️ No content extracted from {p}")
 
     if all_docs:
+        client = get_chroma_client()
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR,
-            client_settings={"chroma_db_impl": "duckdb+parquet"}
+            client=client,
+            persist_directory=CHROMA_DIR
         )
         vectorstore.persist()
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
