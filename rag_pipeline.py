@@ -4,8 +4,10 @@ from typing import List, Dict
 from utils.pdf_loader import load_pdf_as_documents
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms import HuggingFacePipeline
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import os
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+from langchain.llms import HuggingFacePipeline
+
 
 # ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -18,11 +20,19 @@ vectorstore = None
 def build_llm():
     model_name = "google/flan-t5-small"  # Lightweight model for Streamlit Cloud
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)  # ✅ Correct class for T5
-    text_gen_pipeline = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=512)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    
+    text_gen_pipeline = pipeline(
+        "text2text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        model_kwargs={"max_length": 512}
+    )
+    
     return HuggingFacePipeline(pipeline=text_gen_pipeline)
 
 llm = build_llm()
+
 
 # ✅ Ingest PDFs into Chroma
 def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overlap: int = 150):
