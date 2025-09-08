@@ -3,8 +3,8 @@ langchain>=0.1.0
 langchain-community>=0.0.10
 transformers
 torch
-faiss-cpu
 sentence-transformers
+chromadb
 pypdf
 pandas
 numpy
