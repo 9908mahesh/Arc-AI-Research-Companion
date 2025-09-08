@@ -18,7 +18,7 @@ vectorstore = None
 def build_llm():
     model_name = "google/flan-t5-small"  # Lightweight model for Streamlit Cloud
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)  # ✅ Correct class for T5
     text_gen_pipeline = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=512)
     return HuggingFacePipeline(pipeline=text_gen_pipeline)
 
