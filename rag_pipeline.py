@@ -1,14 +1,23 @@
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# Remove OpenAI embeddings import
+# from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI  # Keep this for Chat model (optional, if you still use OpenAI for answering)
 from langchain.docstore.document import Document
 from typing import List, Dict
-from config import OPENAI_CHAT_MODEL, OPENAI_EMBED_MODEL, OPENAI_API_KEY, DEFAULT_TOP_K
+from config import OPENAI_CHAT_MODEL, OPENAI_API_KEY, DEFAULT_TOP_K
 from utils.pinecone_helper import get_vectorstore, create_index_if_not_exists
 from utils.pdf_loader import load_pdf_as_documents
-from langchain_pinecone import PineconeVectorStore
 
+# ✅ NEW: Import HuggingFace embeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+
+# ✅ Use Pinecone VectorStore from langchain_community
+from langchain_community.vectorstores import Pinecone as LangPinecone
+
+# ✅ Use HuggingFace model for embeddings
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # ✅ Ensure Pinecone index exists before any ingestion or retrieval
-create_index_if_not_exists(dim=1536)
+create_index_if_not_exists(dim=384)  # HuggingFace MiniLM has 384 dimensions
 
 # ✅ Updated ingest_filepaths with debug logs
 def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overlap: int = 150):
@@ -16,7 +25,7 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
     Ingest multiple PDFs into Pinecone vectorstore.
     Returns number of documents added.
     """
-    vs = get_vectorstore()
+    vs = get_vectorstore(embedding_model)  # Pass HF embeddings
     docs_added = 0
 
     for p in file_paths:
@@ -36,11 +45,11 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
 
 # ✅ Retriever function for similarity search
 def get_retriever(top_k: int = None):
-    vs = get_vectorstore()
+    vs = get_vectorstore(embedding_model)  # Use HF embeddings
     retriever = vs.as_retriever(search_type="similarity", search_kwargs={"k": top_k or DEFAULT_TOP_K})
     return retriever
 
-# ✅ Build ChatOpenAI model
+# ✅ Build ChatOpenAI model (Optional: Keep for answering if you still use OpenAI)
 def build_chat_model(temperature=0.0):
     return ChatOpenAI(model=OPENAI_CHAT_MODEL, temperature=temperature, openai_api_key=OPENAI_API_KEY)
 
