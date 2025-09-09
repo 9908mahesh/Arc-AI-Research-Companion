@@ -1,3 +1,8 @@
+# ✅ Fix for SQLite issue (override with pysqlite3)
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
+
 from typing import List, Dict
 import os
 import chromadb
