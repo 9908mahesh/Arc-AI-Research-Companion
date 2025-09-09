@@ -1,11 +1,8 @@
-# ✅ Fix for SQLite issue (override with pysqlite3)
-import sys
-import pysqlite3
-sys.modules["sqlite3"] = pysqlite3
+# ✅ Updated for new Chroma API
 
 from typing import List, Dict
 import os
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
@@ -18,7 +15,7 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 
 # ✅ LLM using HuggingFace
 def build_llm():
-    model_name = "google/flan-t5-small"
+    model_name = "google/flan-t5-small"  # ✅ Lightweight for Streamlit
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
@@ -33,14 +30,13 @@ def build_llm():
 
 llm = build_llm()
 
-# ✅ Get Vectorstore (NO PersistentClient now)
+# ✅ Get Vectorstore (new API)
 def get_vectorstore():
     if not os.path.exists(CHROMA_DIR):
         raise ValueError("❌ Chroma DB not found. Please ingest documents first.")
     return Chroma(
         persist_directory=CHROMA_DIR,
-        embedding_function=embedding_model,
-        collection_name="arc_collection"  # ✅ Required in new API
+        embedding_function=embedding_model
     )
 
 # ✅ Ingest PDFs into Chroma
@@ -58,8 +54,7 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR,
-            collection_name="arc_collection"
+            persist_directory=CHROMA_DIR
         )
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
         return len(all_docs)
