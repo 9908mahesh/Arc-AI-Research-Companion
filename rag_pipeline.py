@@ -1,4 +1,4 @@
-# ✅ Updated for new Chroma API
+# ✅ Updated for Chroma >= 0.5.4 with DuckDB backend
 
 from typing import List, Dict
 import os
@@ -13,9 +13,9 @@ from config import CHROMA_DIR
 # ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# ✅ LLM using HuggingFace
+# ✅ Build LLM using HuggingFace
 def build_llm():
-    model_name = "google/flan-t5-small"  # ✅ Lightweight for Streamlit
+    model_name = "google/flan-t5-small"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
@@ -30,16 +30,17 @@ def build_llm():
 
 llm = build_llm()
 
-# ✅ Get Vectorstore (new API)
+# ✅ Get Chroma Vectorstore with DuckDB backend
 def get_vectorstore():
     if not os.path.exists(CHROMA_DIR):
         raise ValueError("❌ Chroma DB not found. Please ingest documents first.")
     return Chroma(
         persist_directory=CHROMA_DIR,
-        embedding_function=embedding_model
+        embedding_function=embedding_model,
+        client_settings={"chroma_db_impl": "duckdb+parquet"}
     )
 
-# ✅ Ingest PDFs into Chroma
+# ✅ Ingest PDFs into Chroma DB
 def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overlap: int = 150):
     all_docs = []
     for p in file_paths:
@@ -54,7 +55,8 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR
+            persist_directory=CHROMA_DIR,
+            client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
         return len(all_docs)
@@ -100,7 +102,7 @@ def answer_query(question: str, top_k: int = 5):
     response = llm(prompt)
 
     return {
-        "answer": response,
+        "answer": response["generated_text"] if isinstance(response, dict) else str(response),
         "citations": citations
     }
 
@@ -108,4 +110,5 @@ def answer_query(question: str, top_k: int = 5):
 def summarize_documents(documents: List[Document], length: str = "short"):
     text_combined = "\n\n".join([d.page_content for d in documents[:20]])
     prompt = f"Summarize in {length} detail:\n{text_combined}"
-    return llm(prompt)
+    response = llm(prompt)
+    return response["generated_text"] if isinstance(response, dict) else str(response)
