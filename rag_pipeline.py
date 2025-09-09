@@ -51,6 +51,7 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
         else:
             print(f"⚠️ No content extracted from {p}")
 
+    # Ensure CHROMA_DIR exists and create a vectorstore if documents were loaded
     if all_docs:
         vectorstore = Chroma.from_documents(
             documents=all_docs,
@@ -59,16 +60,14 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
-        return {
-            "chunks_ingested": len(all_docs),
-            "persist_directory": CHROMA_DIR
-        }
     else:
         print("⚠️ No documents added.")
-        return {
-            "chunks_ingested": 0,
-            "persist_directory": CHROMA_DIR
-        }
+
+    # Return a dictionary with 'chunks_ingested' and 'persist_directory' in all cases
+    return {
+        "chunks_ingested": len(all_docs),
+        "persist_directory": CHROMA_DIR
+    }
 
 # ✅ Retriever
 def get_retriever(top_k: int = 5):
