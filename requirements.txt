@@ -1,11 +1,12 @@
 streamlit
 langchain==0.1.16
 langchain-community==0.0.33
+langchain-chroma>=0.1.0
 langchain-huggingface
 transformers==4.40.1
 torch
 sentence-transformers
-chromadb==0.4.22
+chromadb>=0.5.4
 duckdb
 pypdf
 pandas
@@ -14,4 +15,3 @@ requests
 python-dotenv
 reportlab
 pysqlite3-binary==0.5.2.post3
-
