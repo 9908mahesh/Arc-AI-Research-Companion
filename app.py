@@ -1,13 +1,13 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import streamlit as st
 import tempfile
 import os
 from rag_pipeline import ingest_filepaths, answer_query, get_retriever, summarize_documents
 from utils.pdf_exporter import create_summary_pdf
 from utils.ui_helpers import style_app, sidebar_instructions
-
 
 # --- Page Config & Styles ---
 st.set_page_config(page_title="Arc – AI Research Companion", layout="wide", initial_sidebar_state="expanded")
@@ -44,9 +44,9 @@ if st.button("📥 Ingest Uploaded PDFs"):
                     tmp.close()
                     tmp_files.append(tmp.name)
 
-                # Ingest documents into Chroma
-                total_chunks = ingest_filepaths(tmp_files, chunk_size, chunk_overlap)
-                st.success(f"✅ Successfully ingested {total_chunks} chunks into Chroma DB.")
+                # Ingest documents into Chroma and get the result dictionary
+                ingestion_result = ingest_filepaths(tmp_files, chunk_size, chunk_overlap)
+                st.success(f"✅ Successfully ingested {ingestion_result['chunks_ingested']} chunks into Chroma DB at {ingestion_result['persist_directory']}.")
             except Exception as e:
                 st.error(f"Ingestion failed: {e}")
             finally:
