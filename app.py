@@ -4,6 +4,9 @@ import os
 from rag_pipeline import ingest_filepaths, answer_query, get_retriever, summarize_documents
 from utils.pdf_exporter import create_summary_pdf
 from utils.ui_helpers import style_app, sidebar_instructions
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # --- Page Config & Styles ---
 st.set_page_config(page_title="Arc – AI Research Companion", layout="wide", initial_sidebar_state="expanded")
