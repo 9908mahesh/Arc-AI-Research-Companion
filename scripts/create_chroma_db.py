@@ -1,3 +1,8 @@
+# ✅ Fix for SQLite issue
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
+
 import os
 import chromadb
 from chromadb.config import Settings
@@ -13,7 +18,7 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 def get_chroma_client():
     return chromadb.PersistentClient(
         path=CHROMA_DIR,
-        settings=Settings(chroma_db_impl="duckdb+parquet")  # ✅ Force DuckDB
+        settings=Settings(chroma_db_impl="duckdb+parquet")
     )
 
 # ✅ Create Chroma index from PDFs
@@ -32,7 +37,7 @@ def create_chroma_index(file_paths, chunk_size=1000, chunk_overlap=150):
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            client=client,  # ✅ Use DuckDB client
+            client=client,  # ✅ Use DuckDB
             persist_directory=CHROMA_DIR
         )
         vectorstore.persist()
