@@ -1,7 +1,5 @@
 # ✅ Updated for Chroma >= 0.5.4 with DuckDB backend
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from typing import List, Dict
 import os
 from langchain_chroma import Chroma
@@ -11,7 +9,6 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 from langchain.schema import Document
 from utils.pdf_loader import load_pdf_as_documents
 from config import CHROMA_DIR
-
 
 # ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -62,10 +59,16 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
-        return len(all_docs)
+        return {
+            "chunks_ingested": len(all_docs),
+            "persist_directory": CHROMA_DIR
+        }
     else:
         print("⚠️ No documents added.")
-        return 0
+        return {
+            "chunks_ingested": 0,
+            "persist_directory": CHROMA_DIR
+        }
 
 # ✅ Retriever
 def get_retriever(top_k: int = 5):
