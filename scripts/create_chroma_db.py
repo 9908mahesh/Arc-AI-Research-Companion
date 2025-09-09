@@ -1,50 +1,31 @@
-# ✅ Fix for SQLite issue
-import sys
-import pysqlite3
-sys.modules["sqlite3"] = pysqlite3
+# ✅ create_chroma_db.py - Chroma ingestion script
 
 import os
+from utils.pdf_loader import load_pdf_as_documents
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from utils.pdf_loader import load_pdf_as_documents
 from config import CHROMA_DIR
 
 # ✅ HuggingFace Embeddings
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# ✅ Create Chroma index from PDFs using the new API
-def create_chroma_index(file_paths, chunk_size=1000, chunk_overlap=150):
+def create_chroma_db(pdf_folder: str):
     all_docs = []
-    for p in file_paths:
-        docs = load_pdf_as_documents(p)
-        if docs:
-            print(f"✅ Loaded {len(docs)} chunks from {p}")
-            all_docs.extend(docs)
-        else:
-            print(f"⚠️ No content extracted from {p}")
+    for file_name in os.listdir(pdf_folder):
+        if file_name.endswith(".pdf"):
+            file_path = os.path.join(pdf_folder, file_name)
+            docs = load_pdf_as_documents(file_path)
+            if docs:
+                print(f"✅ Loaded {len(docs)} chunks from {file_name}")
+                all_docs.extend(docs)
 
     if all_docs:
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            persist_directory=CHROMA_DIR  # ✅ Directly persist with new API
+            persist_directory=CHROMA_DIR,
+            client_settings={"chroma_db_impl": "duckdb+parquet"}
         )
-        vectorstore.persist()
-        print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
-        return len(all_docs)
+        print(f"✅ Chroma DB successfully created at {CHROMA_DIR}")
     else:
-        print("⚠️ No documents added to Chroma DB.")
-        return 0
-
-# ✅ Load Chroma Vectorstore
-def get_vectorstore():
-    if not os.path.exists(CHROMA_DIR):
-        raise ValueError("❌ Chroma DB not found. Please ingest documents first.")
-    return Chroma(
-        persist_directory=CHROMA_DIR,
-        embedding_function=embedding_model
-    )
-
-if __name__ == "__main__":
-    sample_files = ["sample1.pdf", "sample2.pdf"]
-    create_chroma_index(sample_files)
+        print("⚠️ No documents found for ingestion.")
