@@ -5,8 +5,6 @@ sys.modules["sqlite3"] = pysqlite3
 
 from typing import List, Dict
 import os
-import chromadb
-from chromadb.config import Settings
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFacePipeline
@@ -20,7 +18,7 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 
 # ✅ LLM using HuggingFace
 def build_llm():
-    model_name = "google/flan-t5-small"  # ✅ Lightweight for Streamlit
+    model_name = "google/flan-t5-small"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
@@ -35,22 +33,14 @@ def build_llm():
 
 llm = build_llm()
 
-# ✅ Get DuckDB-based Chroma Client
-def get_chroma_client():
-    return chromadb.PersistentClient(
-        path=CHROMA_DIR,
-        settings=Settings(chroma_db_impl="duckdb+parquet")
-    )
-
-# ✅ Load Chroma Vectorstore
+# ✅ Get Vectorstore (NO PersistentClient now)
 def get_vectorstore():
     if not os.path.exists(CHROMA_DIR):
         raise ValueError("❌ Chroma DB not found. Please ingest documents first.")
-    client = get_chroma_client()
     return Chroma(
         persist_directory=CHROMA_DIR,
         embedding_function=embedding_model,
-        client=client
+        collection_name="arc_collection"  # ✅ Required in new API
     )
 
 # ✅ Ingest PDFs into Chroma
@@ -65,14 +55,12 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
             print(f"⚠️ No content extracted from {p}")
 
     if all_docs:
-        client = get_chroma_client()
         vectorstore = Chroma.from_documents(
             documents=all_docs,
             embedding=embedding_model,
-            client=client,
-            persist_directory=CHROMA_DIR
+            persist_directory=CHROMA_DIR,
+            collection_name="arc_collection"
         )
-        vectorstore.persist()
         print(f"✅ Chroma DB index created and saved at {CHROMA_DIR}")
         return len(all_docs)
     else:
