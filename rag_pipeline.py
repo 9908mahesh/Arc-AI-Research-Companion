@@ -1,5 +1,7 @@
 # ✅ Updated for Chroma >= 0.5.4 with DuckDB backend
-
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 from typing import List, Dict
 import os
 from langchain_chroma import Chroma
