@@ -53,7 +53,6 @@ def ingest_filepaths(file_paths: List[str], chunk_size: int = 1000, chunk_overla
         else:
             print(f"⚠️ No content extracted from {p}")
 
-    # Ensure CHROMA_DIR exists and create a vectorstore if documents were loaded
     if all_docs:
         vectorstore = Chroma.from_documents(
             documents=all_docs,
