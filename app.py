@@ -44,14 +44,8 @@ if st.button("📥 Ingest Uploaded PDFs"):
                     tmp.close()
                     tmp_files.append(tmp.name)
 
-                # Ingest documents into Chroma and get the result
+                # Ingest documents into Chroma and get the result dictionary
                 ingestion_result = ingest_filepaths(tmp_files, chunk_size, chunk_overlap)
-                
-                # ✅ THIS DEBUGGING LINE IS NEW. IT WILL SHOW YOU THE RESULT
-                st.text(f"DEBUG: Returned value type is {type(ingestion_result)}")
-                st.text(f"DEBUG: Returned value is {ingestion_result}")
-
-                # This line will still fail if the returned value isn't a dict
                 st.success(f"✅ Successfully ingested {ingestion_result['chunks_ingested']} chunks into Chroma DB at {ingestion_result['persist_directory']}.")
             except Exception as e:
                 st.error(f"Ingestion failed: {e}")
